@@ -1,9 +1,13 @@
 #Randal McKee 011094452
 
+from deliver_packages import deliver_packages
 from load_package_data import load_package_data
-from load_distance_data import load_distance_data
+from load_distance_data import get_distance, load_distance_data
 from hash_table import ChainingHashTable
 from package import Package
+from datetime import datetime
+from truck import Truck
+
 
 def main():
     # Create a hash table to store packages
@@ -12,33 +16,67 @@ def main():
     # Load package data from CSV file into the hash table
     load_package_data('packages.csv', package_hash_table)
 
-    # **REMOVE** TEST: Retrieve and print a package by ID
-    pkg_id_to_find = 9  # Change this to test with different package IDs
-    package = package_hash_table.search(pkg_id_to_find)
-    if package:
-        print(f"Package ID: {package.package_id}")
-        print(f"Address: {package.address}")
-        print(f"City: {package.city}")
-        print(f"State: {package.state}")
-        print(f"Zip Code: {package.zip_code}")
-        print(f"Delivery Deadline: {package.deadline}")
-        print(f"Weight: {package.weight}")
-        print(f"Special Notes: {package.notes}")
-    else:
-        print(f"Package with ID {pkg_id_to_find} not found.")
-    
-    
-    # In main.py — temporary test
+    # Load distance data for algorithm use
     address_list, distance_matrix = load_distance_data("distances.csv")
 
-    print(f"Loaded {len(address_list)} addresses")  # Should be 27
-    print(f"First address: '{address_list[0]}'")     # Should be "4001 South 700 East"
-    print(f"HUB to 1060 Dalton: {distance_matrix[0][1]}")  # Should be 7.2
-    print(f"1060 Dalton to HUB: {distance_matrix[1][0]}")  # Should be 7.2 (mirrored)
+    # Truck 1 - earliest deadlines and grouped packages
+    truck1_packages = [1, 13, 14, 15, 16, 19, 20, 29, 30, 31, 34, 37, 40]
+    truck1 = Truck(1, datetime(2026, 1, 1, 8, 0), truck1_packages)
 
-    # Print all addresses to visually verify
-    for i, addr in enumerate(address_list):
-        print(f"  [{i}] {addr}")
+    # Truck 2 - next set of deadlines and grouped packages
+    truck2_packages = [3, 5, 6, 7, 8, 10, 18, 25, 27, 28, 32, 33, 35, 36, 38, 39]
+    truck2 = Truck(2, datetime(2026, 1, 1, 9, 5, 0), truck2_packages)
+
+    # Truck 3 - remaining packages
+    truck3_packages = [2, 4, 9, 11, 12, 17, 21, 22, 23, 24, 26]
+    truck3 = Truck(3, None, truck3_packages)
+
+
+    """Run Truck 1 deliveries (departs at 8:00 AM)"""
+    
+    # Mark all packages on the truck as "En Route"
+    for package_id in truck1.packages:
+        package = package_hash_table.search(package_id)
+        package.status = "En Route"
+        package.truck_id = truck1.truck_id
+
+    deliver_packages(truck1, package_hash_table, get_distance, address_list, distance_matrix)
+
+
+    """Run Truck 2 deliveries (departs at 9:05 AM)"""
+
+    # Mark all packages on the truck as "En Route"
+    for package_id in truck2.packages:
+        package = package_hash_table.search(package_id)
+        package.status = "En Route"
+        package.truck_id = truck2.truck_id
+
+    deliver_packages(truck2, package_hash_table, get_distance, address_list, distance_matrix)
+
+    # Truck 3 departs after Truck 1 returns to the hub
+    truck3.departure_time = truck1.current_time
+    truck3.current_time = truck1.current_time
+
+    # Fix package 9's address and update its distance data before Truck 3 departs
+    package_9 = package_hash_table.search(9)
+    package_9.address = "410 S State St"
+    package_9.zip_code = "84111"
+
+    """Run Truck 3 deliveries"""
+    
+    # Mark all packages on the truck as "En Route"
+    for package_id in truck3.packages:
+        package = package_hash_table.search(package_id)
+        package.status = "En Route"
+        package.truck_id = truck3.truck_id
+
+    deliver_packages(truck3, package_hash_table, get_distance, address_list, distance_matrix)
+
+    # Total mileage calculation
+    total_mileage = truck1.mileage + truck2.mileage + truck3.mileage
+    print(f"Total mileage for all trucks: {total_mileage:.2f} miles")
+
+
 
 
 if __name__ == "__main__":

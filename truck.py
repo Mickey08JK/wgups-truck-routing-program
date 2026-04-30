@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 class Truck:
     """
     Represents a delivery truck for the routing program.
