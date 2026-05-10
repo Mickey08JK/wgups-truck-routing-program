@@ -1,4 +1,8 @@
-#Randal McKee 011094452
+'''
+Data Stuctures and Algorithms - C950 
+Task 2
+Randal McKee 011094452
+'''
 
 from deliver_packages import deliver_packages
 from load_package_data import load_package_data
@@ -7,6 +11,7 @@ from hash_table import ChainingHashTable
 from package import Package
 from datetime import datetime
 from truck import Truck
+from ui import user_interface
 
 
 def main():
@@ -16,19 +21,29 @@ def main():
     # Load package data from CSV file into the hash table
     load_package_data('packages.csv', package_hash_table)
 
+    # Mark delayed packages - won't arrive at hub until 9:05 AM
+    delayed_packages = [6, 25, 28, 32]
+    for package_id in delayed_packages:
+        package = package_hash_table.search(package_id)
+        package.status = "Delayed"
+
+    # Mark package 9 as delayed with incorrect address - won't be fixed until 10:20 AM
+    package_9 = package_hash_table.search(9)
+    package_9.status = "Delayed"
+
     # Load distance data for algorithm use
     address_list, distance_matrix = load_distance_data("distances.csv")
 
-    # Truck 1 - earliest deadlines and grouped packages
-    truck1_packages = [1, 13, 14, 15, 16, 19, 20, 29, 30, 31, 34, 37, 40]
+    # Truck 1 - earliest deadlines and grouped packages - departs at 8:00 AM
+    truck1_packages = [1, 4, 13, 14, 15, 16, 19, 20, 21, 22, 29, 30, 31, 34, 37, 40]
     truck1 = Truck(1, datetime(2026, 1, 1, 8, 0), truck1_packages)
 
-    # Truck 2 - next set of deadlines and grouped packages
+    # Truck 2 - next set of deadlines and grouped packages - departs at 9:05 AM
     truck2_packages = [3, 5, 6, 7, 8, 10, 18, 25, 27, 28, 32, 33, 35, 36, 38, 39]
     truck2 = Truck(2, datetime(2026, 1, 1, 9, 5, 0), truck2_packages)
 
-    # Truck 3 - remaining packages
-    truck3_packages = [2, 4, 9, 11, 12, 17, 21, 22, 23, 24, 26]
+    # Truck 3 - remaining packages - departs after Truck 1 returns to the hub
+    truck3_packages = [2, 9, 11, 12, 17, 23, 24, 26]
     truck3 = Truck(3, None, truck3_packages)
 
 
@@ -72,9 +87,8 @@ def main():
 
     deliver_packages(truck3, package_hash_table, get_distance, address_list, distance_matrix)
 
-    # Total mileage calculation
-    total_mileage = truck1.mileage + truck2.mileage + truck3.mileage
-    print(f"Total mileage for all trucks: {total_mileage:.2f} miles")
+    # User interface to check package status at any time and view mileage
+    user_interface(package_hash_table, truck1, truck2, truck3)
 
 
 

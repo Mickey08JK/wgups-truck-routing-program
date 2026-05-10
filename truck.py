@@ -3,7 +3,7 @@ from datetime import timedelta
 class Truck:
     """
     Represents a delivery truck for the routing program.
-    Tracks packages, locationk, mileage, and time during delivery.
+    Tracks packages, location, mileage, and time during delivery.
     """
     def __init__(self, truck_id, departure_time, packages):
         self.truck_id = truck_id
