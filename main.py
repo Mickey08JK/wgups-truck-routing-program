@@ -1,8 +1,14 @@
-'''
-Data Stuctures and Algorithms - C950 
+"""
+Data Structures and Algorithms - C950
 Task 2
 Randal McKee 011094452
-'''
+
+Program flow:
+1) Load package and distance data.
+2) Apply known package constraints (delays, corrected address timeline).
+3) Dispatch trucks in timeline order and run nearest-neighbor delivery.
+4) Launch UI for historical status lookups and mileage reporting.
+"""
 
 from deliver_packages import deliver_packages
 from load_package_data import load_package_data
@@ -15,41 +21,41 @@ from ui import user_interface
 
 
 def main():
-    # Create a hash table to store packages
+    # Create central package storage for fast ID-based lookup during routing and UI queries.
     package_hash_table = ChainingHashTable()
 
-    # Load package data from CSV file into the hash table
+    # Load all package records into memory.
     load_package_data('packages.csv', package_hash_table)
 
-    # Mark delayed packages - won't arrive at hub until 9:05 AM
+    # Constraint setup: these packages are not physically available at the hub until 9:05 AM.
     delayed_packages = [6, 25, 28, 32]
     for package_id in delayed_packages:
         package = package_hash_table.search(package_id)
         package.status = "Delayed"
 
-    # Mark package 9 as delayed with incorrect address - won't be fixed until 10:20 AM
+    # Package 9 is also delayed because its address is invalid until 10:20 AM.
     package_9 = package_hash_table.search(9)
     package_9.status = "Delayed"
 
-    # Load distance data for algorithm use
+    # Load address labels and distance matrix used by the routing algorithm.
     address_list, distance_matrix = load_distance_data("distances.csv")
 
-    # Truck 1 - earliest deadlines and grouped packages - departs at 8:00 AM
+    # Truck 1: earliest deadlines and grouped packages, departs at 8:00 AM.
     truck1_packages = [1, 4, 13, 14, 15, 16, 19, 20, 21, 22, 29, 30, 31, 34, 37, 40]
     truck1 = Truck(1, datetime(2026, 1, 1, 8, 0), truck1_packages)
 
-    # Truck 2 - next set of deadlines and grouped packages - departs at 9:05 AM
+    # Truck 2: remaining early constraints, departs at 9:05 AM when delayed packages arrive.
     truck2_packages = [3, 5, 6, 7, 8, 10, 18, 25, 27, 28, 32, 33, 35, 36, 38, 39]
     truck2 = Truck(2, datetime(2026, 1, 1, 9, 5, 0), truck2_packages)
 
-    # Truck 3 - remaining packages - departs after Truck 1 returns to the hub
+    # Truck 3: remaining packages, departure depends on Truck 1 return timeline.
     truck3_packages = [2, 9, 11, 12, 17, 23, 24, 26]
     truck3 = Truck(3, None, truck3_packages)
 
 
-    """Run Truck 1 deliveries (departs at 8:00 AM)"""
+    """Dispatch Truck 1 deliveries (8:00 AM)."""
     
-    # Mark all packages on the truck as "En Route"
+    # At departure, package state transitions from At Hub/Delayed to En Route.
     for package_id in truck1.packages:
         package = package_hash_table.search(package_id)
         package.status = "En Route"
@@ -58,9 +64,9 @@ def main():
     deliver_packages(truck1, package_hash_table, get_distance, address_list, distance_matrix)
 
 
-    """Run Truck 2 deliveries (departs at 9:05 AM)"""
+    """Dispatch Truck 2 deliveries (9:05 AM)."""
 
-    # Mark all packages on the truck as "En Route"
+    # Mark package/truck assignment at departure for timeline-based status reporting.
     for package_id in truck2.packages:
         package = package_hash_table.search(package_id)
         package.status = "En Route"
@@ -68,18 +74,18 @@ def main():
 
     deliver_packages(truck2, package_hash_table, get_distance, address_list, distance_matrix)
 
-    # Truck 3 departs after Truck 1 returns to the hub
+    # Truck 3 departs only after Truck 1 finishes (shared fleet/driver constraint model).
     truck3.departure_time = truck1.current_time
     truck3.current_time = truck1.current_time
 
-    # Fix package 9's address and update its distance data before Truck 3 departs
+    # Timeline event at 10:20 AM: package 9 receives corrected address before Truck 3 routing.
     package_9 = package_hash_table.search(9)
     package_9.address = "410 S State St"
     package_9.zip_code = "84111"
 
-    """Run Truck 3 deliveries"""
+    """Dispatch Truck 3 deliveries."""
     
-    # Mark all packages on the truck as "En Route"
+    # Mark final truck's package status before route execution.
     for package_id in truck3.packages:
         package = package_hash_table.search(package_id)
         package.status = "En Route"
@@ -87,7 +93,7 @@ def main():
 
     deliver_packages(truck3, package_hash_table, get_distance, address_list, distance_matrix)
 
-    # User interface to check package status at any time and view mileage
+    # Run interactive UI to query package statuses at arbitrary times and display total mileage.
     user_interface(package_hash_table, truck1, truck2, truck3)
 
 

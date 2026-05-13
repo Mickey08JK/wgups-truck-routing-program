@@ -2,12 +2,18 @@ from datetime import datetime
 
 
 def get_status_at_time(package, check_time, truck_departure_times):
-    '''Returns the status of a package at a given time, considering truck departure times.'''
+    """Return package status at a user-selected time.
+
+    Evaluation order is intentional:
+    1) If truck has not departed yet, package is At Hub/Delayed.
+    2) If delivery already happened by check_time, package is Delivered.
+    3) Otherwise, package is currently En Route.
+    """
     truck_depart = truck_departure_times.get(package.truck_id)
 
-    # If truck hasn't left yet, package is at hub or delayed
+    # Before truck departure, package cannot be en route.
     if truck_depart is None or check_time < truck_depart:
-        #check if delayed
+        # Time-based delay windows required by assignment constraints.
         if package.package_id in [6, 25, 28, 32]:
             if check_time < datetime(2026, 1, 1, 9, 5, 0):
                 return "Delayed"
@@ -16,7 +22,7 @@ def get_status_at_time(package, check_time, truck_departure_times):
                 return "Delayed"
         return "At Hub"
     
-    # If package has been delivered and check time is after delivery
+    # Delivery status takes precedence once the timestamp has passed.
     if package.delivery_time and check_time >= package.delivery_time:
         return f"Delivered at {package.delivery_time.strftime('%I:%M %p')}"
     
@@ -24,9 +30,9 @@ def get_status_at_time(package, check_time, truck_departure_times):
     return "En Route"
 
 def user_interface(package_hash_table, truck1, truck2, truck3):
-    '''Provides command line interface to check package status at any time and view mileage.'''
+    """Provide a CLI for historical package status lookups and mileage reporting."""
 
-    # Store departure times for lookup
+    # Departure time map supports status reconstruction for any requested time.
     truck_departure_times = {
         1: truck1.departure_time,
         2: truck2.departure_time,
@@ -35,7 +41,7 @@ def user_interface(package_hash_table, truck1, truck2, truck3):
 
     total_mileage = truck1.mileage + truck2.mileage + truck3.mileage
 
-    # Create user menu and actions
+    # Print top-level summary once, then keep menu loop active until exit.
     print("\n" + "=" * 60)
     print("  WGUPS Routing Program")
     print("=" * 60)
@@ -52,6 +58,7 @@ def user_interface(package_hash_table, truck1, truck2, truck3):
 
         if choice == '1':
             try:
+                # Parse HH:MM input into fixed simulation date for consistent comparisons.
                 package_id = int(input("Enter package ID (1-40): ").strip())
                 time_str = input("Enter time (HH:MM in 24-hour format): ").strip()
                 hours, minutes = map(int, time_str.split(":"))
@@ -73,6 +80,7 @@ def user_interface(package_hash_table, truck1, truck2, truck3):
 
         elif choice == '2':
             try:
+                # Produce a full system snapshot for all package IDs at one point in time.
                 time_str = input("Enter time (HH:MM in 24-hour format): ").strip()
                 hours, minutes = map(int, time_str.split(":"))
                 check_time = datetime(2026, 1, 1, hours, minutes, 0)
