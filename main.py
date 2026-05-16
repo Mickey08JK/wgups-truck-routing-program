@@ -77,12 +77,7 @@ def main():
     # Truck 3 departs only after Truck 1 finishes (shared fleet/driver constraint model).
     truck3.departure_time = truck1.current_time
     truck3.current_time = truck1.current_time
-
-    # Timeline event at 10:20 AM: package 9 receives corrected address before Truck 3 routing.
-    package_9 = package_hash_table.search(9)
-    package_9.address = "410 S State St"
-    package_9.zip_code = "84111"
-
+    
     """Dispatch Truck 3 deliveries."""
     
     # Mark final truck's package status before route execution.

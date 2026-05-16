@@ -12,6 +12,10 @@ class Package:
         self.weight = weight
         self.notes = notes
 
+        # For package 9: store the incorrect address until 10:20 AM correction
+        self.incorrect_address = address if package_id == 9 else None
+        self.incorrect_zip_code = zip_code if package_id == 9 else None
+
         # Mutable simulation state updated as trucks are dispatched and deliveries occur.
         self.status = "At hub"
         self.delivery_time = None

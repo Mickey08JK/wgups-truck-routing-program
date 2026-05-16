@@ -1,6 +1,16 @@
 from datetime import datetime
 
 
+def get_display_address(package, check_time):
+    """Return the address to display based on time (for package 9 special handling)."""
+    if package.package_id == 9 and check_time < datetime(2026, 1, 1, 10, 20, 0):
+        # Before 10:20 AM, show the incorrect address
+        return package.incorrect_address, package.incorrect_zip_code
+    else:
+        # After 10:20 AM or for other packages, show the correct address
+        return package.address, package.zip_code
+
+
 def get_status_at_time(package, check_time, truck_departure_times):
     """Return package status at a user-selected time.
 
@@ -67,8 +77,12 @@ def user_interface(package_hash_table, truck1, truck2, truck3):
                 package = package_hash_table.search(package_id)
                 if package:
                     status = get_status_at_time(package, check_time, truck_departure_times)
+                    display_address, display_zip = get_display_address(package, check_time)
+                    address_note = ""
+                    if package.package_id == 9 and check_time < datetime(2026, 1, 1, 10, 20, 0):
+                        address_note = " (Incorrect - will be corrected at 10:20 AM)"
                     print(f"\n  Package {package.package_id} at {check_time.strftime('%I:%M %p')}:")
-                    print(f"  Address:  {package.address}, {package.city}, {package.state} {package.zip_code}")
+                    print(f"  Address:  {display_address}, {package.city}, {package.state} {display_zip}{address_note}")
                     print(f"  Deadline: {package.deadline}")
                     print(f"  Weight:   {package.weight} kg")
                     print(f"  Truck:    {package.truck_id}")
@@ -92,7 +106,8 @@ def user_interface(package_hash_table, truck1, truck2, truck3):
                 for package_id in range(1, 41):
                     package = package_hash_table.search(package_id)
                     status = get_status_at_time(package, check_time, truck_departure_times)
-                    print(f"  {package.package_id:<5} {package.address:<40} {package.deadline:<12} {package.truck_id:<7} {status}")
+                    display_address, display_zip = get_display_address(package, check_time)
+                    print(f"  {package.package_id:<5} {display_address:<40} {package.deadline:<12} {package.truck_id:<7} {status}")
             except ValueError:
                 print("  Invalid input. Please enter a valid time (HH:MM in 24-hour format e.g. 09:30).")
 
